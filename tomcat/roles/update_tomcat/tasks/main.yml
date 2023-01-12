@@ -1,0 +1,163 @@
+    - name: Obtenim el CATALINA_HOME
+      remote_user: tomcat
+      shell: "source /home/tomcat/.bash_profile;echo $CATALINA_HOME"
+      register: catalina_home
+    
+    - name: Obtenim el nom de la instancia del Tomcat
+      remote_user: tomcat
+      shell: "source /home/tomcat/.bash_profile;echo $CATALINA_BASE | cut -d/ -f4"
+      register: instancia
+
+
+    - name: busquem la versió del tomcat
+      shell: "{{ dir_tomcat }}/bin/catalina.sh version  |grep -i 'server number' | awk -F ':' '{print $2}'| rev | cut -d/ -f2- | rev | xargs"
+      register: current_version
+      vars:
+
+    - name: nom de la variable
+      debug:
+        msg: "{{ ver_actual }}"
+
+    - name: Obtenim el nom  del directori del Tomcat
+      remote_user: tomcat
+      shell: "source /home/tomcat/.bash_profile;echo $CATALINA_HOME | cut -d/ -f4"
+      register: home
+            
+    
+
+    - name: valors Catalina_home
+      debug:
+        msg: "{{ home.stdout  }}"
+    
+    - name: obtenim el directori jws
+      remote_user: tomcat
+      shell: source /home/tomcat/.bash_profile;echo $CATALINA_HOME | awk -F "/" '{print $1"/"$2"/"$3"/"}'
+      register: jws
+
+    - name: valors dir_jws
+      debug:
+        msg: "{{ jws.stdout_lines[0] }}"
+
+
+    - name: Comprova si s'ha d'actualitzar.
+      #when: current_version.stdout | trim is version(ver_to_update, '<')
+      when: ver_actual_major is version(ver_nova_major, '=') and ver_actual_minor is version(ver_nova_minor, '<')
+      block:
+        - name: creem directori al host destí {{ dir_tmp_repo }}
+          file:
+            state: directory
+            path: "{{ dir_tmp_repo }}"
+            mode: "0770"
+            owner: tomcat
+            group: tomcat
+
+        - name: Descarregem la versió correcte del repositori.
+          get_url:
+            url: "http://192.168.1.110/repositorios/tomcat/apache-tomcat-{{ ver_to_update }}.zip"
+            dest: "{{ dir_tmp_repo }}/tomcat_{{ ver_to_update }}.zip"
+            #username: itm
+            #password: monitor@ibm2014
+
+
+
+        - name: Descomprimim el zip al directori {{ dir_tmp_repo }}
+          unarchive:
+            src: "{{ dir_tmp_repo }}/tomcat_{{ ver_to_update }}.zip"
+            dest: "{{ dir_tmp_repo }}"
+            remote_src: yes
+            group: tomcat
+            owner: tomcat
+        - name: Borrem el fitxer "{{ dir_tmp_repo }}/tomcat_{{ ver_to_update }}.zip"
+          file:
+            state: absent
+            path: "{{ dir_tmp_repo }}/tomcat_{{ ver_to_update }}.zip"
+
+        - name: Aturem la instancia {{ instancia.stdout | trim }}.
+          remote_user: tomcat
+          shell: "source /home/tomcat/.bash_profile;echo $CATALINA_BASE | cut -d/ -f4"
+          register: instancia
+          notify: "parem_instancia"
+
+        - name: Creem carpeta de backup {{ dir_backup_tomcat }}
+          file:
+            path: "{{ dir_backup_tomcat }}"
+            state: directory
+
+        - name: Copiem la carpeta {{ dir_jws }} a la carpeta {{ dir_backup_tomcat }}
+          become: true
+          copy:
+            src: "{{ dir_jws }}"
+            remote_src: yes
+            dest: "{{ dir_backup_tomcat }}"
+            owner: tomcat
+            group: tomcat
+
+        - name: Esborrem el contingut de la carpeta {{ dir_tomcat }}
+          become: true
+          file:
+             path: "{{ dir_tomcat}}"
+             state: absent
+             #shell: "rm -rf {{ dir_tomcat }}"
+
+        - name: Copiem {{ dir_tmp_repo }}/apache-tomcat-{{ ver_to_update }}/  a {{ dir_tomcat }}
+          copy:
+            src: "{{ dir_tmp_repo }}/apache-tomcat-{{ ver_to_update }}/"
+            dest: "{{ dir_tomcat}}"
+            remote_src: yes
+            owner: tomcat
+            group: tomcat
+
+
+
+
+
+
+
+
+        - name: Sobreescrivim fitxsers amb els de la versió anterior {{ current_version.stdout | trim }}
+          copy:
+            src: "{{ dir_backup_tomcat }}/{{ home.stdout }}"
+            dest: "{{ dir_jws }}"
+            remote_src: yes
+            force: no # amb el no, assegurem que no sobreescriu in fitxer que ja existeix.
+            owner: tomcat
+            group: tomcat
+
+        - name: Donem permisosd'execució al directori {{ dir_tomcat }}/bin
+          file:
+            path: "{{ dir_tomcat }}/bin"
+            owner: tomcat
+            group: tomcat
+            mode: '0755'
+            recurse: yes
+
+
+        - name: Busquem les llibreries ojdbc* mod* mssql* i db2* a {{ home.stdout }}
+          find:
+            #paths: /serveis/marc/update_tomcat/backup_tomcat_9.0.7/tomcat/lib/
+            paths: "{{ dir_buscar_llibreries }}"
+            patterns: 'ojdbc*,mod*,mssql*,db2*'
+          register: file_to_copy
+
+        - name: Llibreries trobades
+          debug:
+            msg: "{{file_to_copy.files | map(attribute='path')| list }}"
+
+        
+        - name: Copiem  les llibreries al directori /lib de la instància
+          copy:
+            src: "{{ item.path }}"
+            dest: "{{ dir_instancia_lib }}"
+            remote_src: yes
+            owner: tomcat
+            group: tomcat
+          with_items:
+            - "{{ file_to_copy.files }}"
+
+        - name: Iniciem la instancia {{ instancia.stdout | trim }}.
+          remote_user: tomcat
+          shell: "source /home/tomcat/.bash_profile;echo $CATALINA_BASE | cut -d/ -f4"
+          register: instancia
+          notify: "iniciem_instancia"
+
+

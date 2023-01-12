@@ -1,0 +1,19 @@
+[master]
+master ansible_ssh_user=root   ansible_ssh_pass=Mariachi10
+
+[all]
+worker01
+worker02
+
+[db_servers]
+worker01 ansible_host=192.168.1.111 ansible_user=maria mysqlservice=mysqld mysql_port=3306 dbname=ecomdb dbuser=ecomuser dbpassword=ecompassword ansible_ssh_private_key_file=/home/ansible/.ssh/maria
+
+[web_servers]
+worker02 ansible_host=192.168.1.112 ansible_user=john httpd_port=80 repository=https://github.com/kodekloudhub/learning-app-ecommerce.git ansible_ssh_private_key_file=/home/ansible/.ssh/john
+
+
+
+[workers]
+worker01
+worker02
+

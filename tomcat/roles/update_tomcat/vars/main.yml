@@ -1,0 +1,12 @@
+dir_tmp_repo: /serveis/marc/{{ instancia.stdout }}/update_tomcat/new_version_{{ ver_to_update | trim }}
+dir_backup_tomcat: /serveis/marc/{{ instancia.stdout }}update_tomcat/backup_tomcat_{{ current_version.stdout | trim }}
+dir_tomcat: "{{ catalina_home.stdout}}"
+dir_buscar_llibreries: "{{ dir_backup_tomcat }}/{{ home.stdout }}/lib"
+dir_jws: "{{ jws.stdout_lines[0] }}"
+dir_instancia_lib: /opt/jws/{{ instancia.stdout }}/lib/
+ver_actual: "{{ current_version.stdout }}"
+ver_actual_major: "{{ ver_actual.split('.')[0]}}.{{ ver_actual.split('.')[1]}}"
+ver_actual_minor: "{{ ver_actual.split('.')[2]}}"
+ver_nova: "{{ ver_to_update }}"
+ver_nova_major: "{{ ver_nova.split('.')[0]}}.{{ ver_nova.split('.')[1] }}"
+ver_nova_minor: "{{ ver_nova.split('.')[2] }}"

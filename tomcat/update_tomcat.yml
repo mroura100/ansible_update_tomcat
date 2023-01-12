@@ -1,0 +1,5 @@
+---
+- name: Role to update tomcat
+  hosts: "{{ target  }}"
+  roles:
+    - update_tomcat 

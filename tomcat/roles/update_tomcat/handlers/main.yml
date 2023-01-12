@@ -1,0 +1,16 @@
+---
+# handlers file for update_tomcat
+    - name: Atura_Tomcat
+      become: true
+      service:
+        name: instancia
+        state: stopped
+      listen: "parem_instancia"
+
+    - name: Aixeca_Tomcat
+      become: true
+      service:
+        name: instancia
+        state: started
+      listen: "iniciem_instancia"
+
