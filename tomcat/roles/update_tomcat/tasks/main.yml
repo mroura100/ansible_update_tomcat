@@ -156,7 +156,7 @@
 
         - name: Reemplacem la línia del connector AJP del directori "{{dir_jws}}/{{instancia.stdout}}/conf/server.xml"
           lineinfile:
-            path: "{{dir_jws}}/{{instancia.stdout}}/conf/server.xml"
+            path: "{{dir_jws}}{{instancia.stdout}}/conf/server.xml"
             regexp: '^<Connector port="8009" '
             line: '^<Connector port="8009" protocol="AJP/1.3" redirectPort="8443" secretRequired="false" />'
             owner: "{{ user }}"
