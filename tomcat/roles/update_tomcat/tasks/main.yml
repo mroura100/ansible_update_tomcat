@@ -157,8 +157,17 @@
         - name: Reemplacem la línia del connector AJP del directori "{{dir_jws}}/{{instancia.stdout}}/conf/server.xml"
           replace:
             path: "{{dir_jws}}{{instancia.stdout}}/conf/server.xml"
-            regexp: '<Connector port="8009".*'
+            regexp: 'Connector port="8009".*'
             replace: '<Connector port="8009" protocol="AJP/1.3" redirectPort="8443" secretRequired="false" />'
+            owner: "{{ user }}"
+            group: "{{ user }}"
+          when:  ver_nova.split('.')[0] == "9"
+
+        - name: Eliminem el caràcter ^M qu es gnera al directori "{{dir_jws}}/{{instancia.stdout}}/conf/server.xml"
+          replace:
+            path: "{{dir_jws}}{{instancia.stdout}}/conf/server.xml"
+            regexp: '\^\M'
+            replace: ''
             owner: "{{ user }}"
             group: "{{ user }}"
           when:  ver_nova.split('.')[0] == "9"
