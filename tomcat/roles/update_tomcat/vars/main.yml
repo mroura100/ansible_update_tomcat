@@ -1,3 +1,4 @@
+user: tomcat
 dir_tmp_repo: /serveis/marc/{{ instancia.stdout }}/update_tomcat/new_version_{{ ver_to_update | trim }}
 dir_backup_tomcat: /serveis/marc/{{ instancia.stdout }}update_tomcat/backup_tomcat_{{ current_version.stdout | trim }}
 dir_tomcat: "{{ catalina_home.stdout}}"

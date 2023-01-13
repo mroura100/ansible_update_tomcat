@@ -1,26 +1,26 @@
     - name: Obtenim el CATALINA_HOME
-      remote_user: tomcat
-      shell: "source /home/tomcat/.bash_profile;echo $CATALINA_HOME"
+      remote_user: "{{ user }}"
+      shell: "source /home/{{ user }}/.bash_profile;echo $CATALINA_HOME"
       register: catalina_home
     
     - name: Obtenim el nom de la instancia del Tomcat
-      remote_user: tomcat
-      shell: "source /home/tomcat/.bash_profile;echo $CATALINA_BASE | cut -d/ -f4"
+      remote_user: "{{ user }}"
+      shell: "source /home/{{ user }}/.bash_profile;echo $CATALINA_BASE | cut -d/ -f4"
       register: instancia
 
 
     - name: busquem la versió del tomcat
       shell: "{{ dir_tomcat }}/bin/catalina.sh version  |grep -i 'server number' | awk -F ':' '{print $2}'| rev | cut -d/ -f2- | rev | xargs"
       register: current_version
-      vars:
+      
 
     - name: nom de la variable
       debug:
         msg: "{{ ver_actual }}"
 
     - name: Obtenim el nom  del directori del Tomcat
-      remote_user: tomcat
-      shell: "source /home/tomcat/.bash_profile;echo $CATALINA_HOME | cut -d/ -f4"
+      remote_user: "{{ user }}"
+      shell: "source /home/{{ user }}/.bash_profile;echo $CATALINA_HOME | cut -d/ -f4"
       register: home
             
     
@@ -30,8 +30,8 @@
         msg: "{{ home.stdout  }}"
     
     - name: obtenim el directori jws
-      remote_user: tomcat
-      shell: source /home/tomcat/.bash_profile;echo $CATALINA_HOME | awk -F "/" '{print $1"/"$2"/"$3"/"}'
+      remote_user: "{{ user }}"
+      shell: source /home/{{ user }}/.bash_profile;echo $CATALINA_HOME | awk -F "/" '{print $1"/"$2"/"$3"/"}'
       register: jws
 
     - name: valors dir_jws
@@ -48,8 +48,8 @@
             state: directory
             path: "{{ dir_tmp_repo }}"
             mode: "0770"
-            owner: tomcat
-            group: tomcat
+            owner: "{{ user }}"
+            group: "{{ user }}"
 
         - name: Descarregem la versió correcte del repositori.
           get_url:
@@ -65,16 +65,16 @@
             src: "{{ dir_tmp_repo }}/tomcat_{{ ver_to_update }}.zip"
             dest: "{{ dir_tmp_repo }}"
             remote_src: yes
-            group: tomcat
-            owner: tomcat
+            group: "{{ user }}"
+            owner: "{{ user }}"
         - name: Borrem el fitxer "{{ dir_tmp_repo }}/tomcat_{{ ver_to_update }}.zip"
           file:
             state: absent
             path: "{{ dir_tmp_repo }}/tomcat_{{ ver_to_update }}.zip"
 
         - name: Aturem la instancia {{ instancia.stdout | trim }}.
-          remote_user: tomcat
-          shell: "source /home/tomcat/.bash_profile;echo $CATALINA_BASE | cut -d/ -f4"
+          remote_user: "{{ user }}"
+          shell: "source /home/{{ user }}/.bash_profile;echo $CATALINA_BASE | cut -d/ -f4"
           register: instancia
           notify: "parem_instancia"
 
@@ -89,23 +89,23 @@
             src: "{{ dir_jws }}"
             remote_src: yes
             dest: "{{ dir_backup_tomcat }}"
-            owner: tomcat
-            group: tomcat
+            owner: "{{ user }}"
+            group: "{{ user }}"
 
         - name: Esborrem el contingut de la carpeta {{ dir_tomcat }}
           become: true
           file:
              path: "{{ dir_tomcat}}"
              state: absent
-             #shell: "rm -rf {{ dir_tomcat }}"
+             
 
         - name: Copiem {{ dir_tmp_repo }}/apache-tomcat-{{ ver_to_update }}/  a {{ dir_tomcat }}
           copy:
             src: "{{ dir_tmp_repo }}/apache-tomcat-{{ ver_to_update }}/"
             dest: "{{ dir_tomcat}}"
             remote_src: yes
-            owner: tomcat
-            group: tomcat
+            owner: "{{ user }}"
+            group: "{{ user }}"
 
 
 
@@ -120,14 +120,14 @@
             dest: "{{ dir_jws }}"
             remote_src: yes
             force: no # amb el no, assegurem que no sobreescriu in fitxer que ja existeix.
-            owner: tomcat
-            group: tomcat
+            owner: "{{ user }}"
+            group: "{{ user }}"
 
         - name: Donem permisosd'execució al directori {{ dir_tomcat }}/bin
           file:
             path: "{{ dir_tomcat }}/bin"
-            owner: tomcat
-            group: tomcat
+            owner: "{{ user }}"
+            group: "{{ user }}"
             mode: '0755'
             recurse: yes
 
@@ -149,14 +149,23 @@
             src: "{{ item.path }}"
             dest: "{{ dir_instancia_lib }}"
             remote_src: yes
-            owner: tomcat
-            group: tomcat
+            owner: "{{ user }}"
+            group: "{{ user }}"
           with_items:
             - "{{ file_to_copy.files }}"
 
+        - name: Reemplacem la línia del connector AJP del directori "{{dir_jws}}/{{instancia.stdout}}/conf/server.xml"
+          replace:
+            path: "{{dir_jws}}{{instancia.stdout}}/conf/server.xml"
+            regexp: 'Connector port="8009".*'
+            replace: '<Connector port="8009" protocol="AJP/1.3" redirectPort="8443" secretRequired="false" />'
+            owner: "{{ user }}"
+            group: "{{ user }}"
+          when:  ver_nova.split('.')[0] == "9"
+
         - name: Iniciem la instancia {{ instancia.stdout | trim }}.
-          remote_user: tomcat
-          shell: "source /home/tomcat/.bash_profile;echo $CATALINA_BASE | cut -d/ -f4"
+          remote_user: "{{ user }}"
+          shell: "source /home/{{ user }}/.bash_profile;echo $CATALINA_BASE | cut -d/ -f4"
           register: instancia
           notify: "iniciem_instancia"
 

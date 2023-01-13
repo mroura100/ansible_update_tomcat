@@ -1,6 +1,10 @@
 # ansible_update_tomcat
 <<<<<<< HEAD
+<<<<<<< HEAD
 hola que tal
 =======
 Marc i Valenti
->>>>>>> e2cbeb3fd6601bee3a7e0a78f24247fbe3c083a3
+PROVES DE COMMIT
+=======
+Marc i Valenti 2
+>>>>>>> c97bbd1f4b2aa78df57bf1f007824070524a293d
