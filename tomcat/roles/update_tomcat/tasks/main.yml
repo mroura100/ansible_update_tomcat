@@ -163,15 +163,6 @@
             group: "{{ user }}"
           when:  ver_nova.split('.')[0] == "9"
 
-        - name: Eliminem el caràcter ^M qu es gnera al directori "{{dir_jws}}/{{instancia.stdout}}/conf/server.xml"
-          replace:
-            path: "{{dir_jws}}{{instancia.stdout}}/conf/server.xml"
-            regexp: '\^\M'
-            replace: ''
-            owner: "{{ user }}"
-            group: "{{ user }}"
-          when:  ver_nova.split('.')[0] == "9"
-
         - name: Iniciem la instancia {{ instancia.stdout | trim }}.
           remote_user: "{{ user }}"
           shell: "source /home/{{ user }}/.bash_profile;echo $CATALINA_BASE | cut -d/ -f4"
