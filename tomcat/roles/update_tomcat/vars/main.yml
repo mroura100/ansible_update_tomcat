@@ -4,7 +4,7 @@ dir_backup_tomcat: /serveis/marc/{{ instancia.stdout }}update_tomcat/backup_tomc
 dir_tomcat: "{{ catalina_home.stdout}}"
 dir_buscar_llibreries: "{{ dir_backup_tomcat }}/{{ home.stdout }}/lib"
 dir_jws: "{{ jws.stdout_lines[0] }}"
-dir_instancia_lib: /opt/jws/{{ instancia.stdout }}/lib/
+dir_instancia_lib: {{ dir_jws }}{{ instancia.stdout }}/lib/
 ver_actual: "{{ current_version.stdout }}"
 ver_actual_major: "{{ ver_actual.split('.')[0]}}.{{ ver_actual.split('.')[1]}}"
 ver_actual_minor: "{{ ver_actual.split('.')[2]}}"
