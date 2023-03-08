@@ -3,14 +3,14 @@
     - name: Atura_Tomcat
       become: true
       service:
-        name: instancia
+        name: "{{ service_instance }}"
         state: stopped
       listen: "parem_instancia"
 
     - name: Aixeca_Tomcat
       become: true
       service:
-        name: instancia
+        name: "{{ service_instance }}"
         state: started
       listen: "iniciem_instancia"
 
