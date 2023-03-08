@@ -1,3 +1,9 @@
+    - name: Aturem la instancia {{ instancia.stdout | trim }}.
+      remote_user: "{{ user }}"
+      shell: "source /home/{{ user }}/.bash_profile;echo $CATALINA_BASE | cut -d/ -f4"
+      register: instancia
+      notify: "parem_instancia"
+    
     - name: Obtenim el CATALINA_HOME
       remote_user: "{{ user }}"
       shell: "source /home/{{ user }}/.bash_profile;echo $CATALINA_HOME"
@@ -157,11 +163,12 @@
         - name: Reemplacem la línia del connector AJP del directori "{{dir_jws}}/{{instancia.stdout}}/conf/server.xml"
           replace:
             path: "{{dir_jws}}{{instancia.stdout}}/conf/server.xml"
-            regexp: 'Connector port="8009".*'
-            replace: '<Connector port="8009" protocol="AJP/1.3" redirectPort="8443" secretRequired="false" />'
+            regexp: '<Connector port="8009".*'
+            replace: '<Connector port="8009" protocol="AJP/1.3" redirectPort="8443" address="{{ ansible_default_ipv4.address }}" secretRequired="false" />'
+            backup: yes
             owner: "{{ user }}"
             group: "{{ user }}"
-          when:  ver_nova.split('.')[0] == "9"
+          #when:  ver_nova.split('.')[0] == "9"
 
         - name: Iniciem la instancia {{ instancia.stdout | trim }}.
           remote_user: "{{ user }}"
