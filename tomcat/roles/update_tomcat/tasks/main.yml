@@ -1,3 +1,9 @@
+    - name: Aturem la instancia {{ instancia.stdout | trim }}.
+      remote_user: "{{ user }}"
+      shell: "source /home/{{ user }}/.bash_profile;echo $CATALINA_BASE | cut -d/ -f4"
+      register: instancia
+      notify: "parem_instancia"
+    
     - name: Obtenim el CATALINA_HOME
       remote_user: "{{ user }}"
       shell: "source /home/{{ user }}/.bash_profile;echo $CATALINA_HOME"
